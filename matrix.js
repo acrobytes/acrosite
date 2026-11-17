@@ -36,15 +36,20 @@ const TYPE = "square";
 const INITIAL_SWEEP = false;
 
 //controls the DELAY so lower faster, higher slower
-const SPEED = 33;
+const SPEED = 50;
 
 //If false there is a 50/50 to fill an item as transparent
 //This toggles that
-const IS_SOLID_LINES = false;
+const IS_SOLID_LINES = true;
 
-const DRAW_SIZE = 20;
-//SEGMENT_SIZE: This is basically the box designated to each thing draw. The bigger it is the more space there is between things. If its less than DRAW_SIZE then there will be an overlap
-const SEGMENT_SIZE = 20;
+const DRAW_SIZE = 15;
+//segmentSize: This is basically the box designated to each thing draw. The bigger it is the more space there is between things. If its less than DRAW_SIZE then there will be an overlap
+var segmentSize = 36;
+//if true randomly draws new characters slightly to the right or left
+//if false then you clearly have ocd (and are a sane person)
+const RANDOM_SEG_OFFSET = false;
+const SEG_OFFSET_MIN = -1;
+const SEG_OFFSET_MAX = 1;
 
 //If you want randomized font size
 //(Set to the save value if you don't want random
@@ -53,7 +58,7 @@ const MAX_FONT_SIZE = 30;
 
 const FONT = "\"Silkscreen\", monospace";
 
-//color picker. Both support custom colors. HOWEVER, fillColor supports any color format but backgroundColor NEEEEEDS rgba format
+//color picker. Both support custom colors. HOWEVER, fillColor supports any color format but backgroundColor NEEEEEDS rgba format           (fillColor also supports css colors. like "purple")
 //                                                                                                (because of opacity things :)
 //If you set backgroundColor to an unsupported value it will default to black
 var fillColor = "blue";
@@ -80,7 +85,7 @@ function resize() {
     canvas.height = window.innerHeight * dpr;
     canvas.style.width = `${window.innerWidth}px`;
     canvas.style.height = `${window.innerHeight}px`;
-    columns = Math.ceil(canvas.width / SEGMENT_SIZE);
+    columns = Math.ceil(canvas.width / segmentSize);
     if (INITIAL_SWEEP === true) {
         while (drops.length < columns) drops.push(0);
     } else {
@@ -122,16 +127,22 @@ function draw() {
         ctx.font= randomSize + FONT;
 
         if (IS_SOLID_LINES === false) {
-            if (Math.floor(Math.random() * (1 + 1)) === 1) {
-                ctx.fillStyle = fillColor;
-            } else {
+            if (Math.floor(Math.random() * (2)) !== 1) {
                 ctx.fillStyle = 'rgba(0, 0, 0, 0)';
+            } else {
+                ctx.fillStyle = fillColor;
             }
         } else {
             ctx.fillStyle = fillColor;
         }
 
-        var offset = (SEGMENT_SIZE - DRAW_SIZE) / 2;
+        var offset = (segmentSize - DRAW_SIZE) / 2;
+
+        if (RANDOM_SEG_OFFSET === true) {
+            var xSegmentSize = segmentSize + (Math.random() * (SEG_OFFSET_MAX - SEG_OFFSET_MIN) + SEG_OFFSET_MAX);
+        } else {
+            xSegmentSize = segmentSize;
+        }
 
         if (TYPE === "text") {
             if (Math.floor(Math.random() * (900000)) === 1) {
@@ -140,18 +151,18 @@ function draw() {
             } else {
                 var text = letters[Math.floor(Math.random() * letters.length)];
             }
-            ctx.fillText(text, i * SEGMENT_SIZE, drops[i] * SEGMENT_SIZE);
+            ctx.fillText(text, i * xSegmentSize, drops[i] * segmentSize);
 
         } else if (TYPE === "circle") {
             ctx.beginPath();
-            ctx.arc(i * SEGMENT_SIZE + offset, drops[i] * SEGMENT_SIZE + offset, DRAW_SIZE / 2, 0, 2 * Math.PI);
+            ctx.arc(i * xSegmentSize + offset, drops[i] * segmentSize + offset, DRAW_SIZE / 2, 0, 2 * Math.PI);
             ctx.fill();
         } else {
-            ctx.fillRect(i * SEGMENT_SIZE + offset, drops[i] * SEGMENT_SIZE + offset, DRAW_SIZE, DRAW_SIZE);
+            ctx.fillRect(i * xSegmentSize + offset, drops[i] * segmentSize + offset, DRAW_SIZE, DRAW_SIZE);
         }
 
         drops[i]++;
-        if (drops[i] * SEGMENT_SIZE > canvas.height && Math.random() > 0.95) {
+        if (drops[i] * segmentSize > canvas.height && Math.random() > 0.95) {
             drops[i] = 0;
         }
     }
